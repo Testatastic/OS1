@@ -155,6 +155,15 @@ lock_create(const char *name)
         }
 
         // add stuff here as needed
+        lock->lk_wchan = wchan_create(lock->lk_name);
+        if (lock->lk_wchan == NULL) {
+      		kfree(lock->lk_name);
+      		kfree(lock);
+      	}
+
+      	spinlock_init(&lock->lk_spin);
+        lock->lk_thread = NULL;
+        lock->busy = false;
 
         return lock;
 }
@@ -165,7 +174,9 @@ lock_destroy(struct lock *lock)
         KASSERT(lock != NULL);
 
         // add stuff here as needed
-
+        spinlock_cleanup(&lock->lk_spin);
+        wchan_destroy(lock->lk_wchan);
+        lock->lk_thread = NULL;
         kfree(lock->lk_name);
         kfree(lock);
 }
@@ -174,26 +185,49 @@ void
 lock_acquire(struct lock *lock)
 {
         // Write this
+        KASSERT(lock != NULL);
+        KASSERT(curthread->t_in_interrupt == false);
 
-        (void)lock;  // suppress warning until code gets written
+        spinlock_acquire(&lock->lk_spin);
+        while(lock->busy){
+          wchan_sleep(lock->lk_wchan, &lock->lk_spin);
+          spinlock_release(&lock->lk_spin);
+          spinlock_acquire(&lock->lk_spin);
+        }
+        //KASSERT(lock->busy == false);
+        lock->lk_thread = curthread;
+        lock->busy = true;
+        spinlock_release(&lock->lk_spin);
+
+
+
+        //(void)lock;  // suppress warning until code gets written
 }
 
 void
 lock_release(struct lock *lock)
 {
         // Write this
+        //assersions to check and see if the lock is there, if its connected to
+        // something and even if its connected to the current thread
+        KASSERT(lock != NULL);
+        KASSERT(lock_do_i_hold(lock));
 
-        (void)lock;  // suppress warning until code gets written
+        spinlock_acquire(&lock->lk_spin);
+        lock->busy = false;
+        lock->lk_thread = NULL;
+        wchan_wakeone(lock->lk_wchan, &lock->lk_spin);
+        spinlock_release(&lock->lk_spin);
+        //(void)lock;  // suppress warning until code gets written
 }
 
 bool
 lock_do_i_hold(struct lock *lock)
 {
         // Write this
+        KASSERT(lock != NULL);
 
-        (void)lock;  // suppress warning until code gets written
-
-        return true; // dummy until code gets written
+        return lock->lk_thread == curthread;
 }
 
 ////////////////////////////////////////////////////////////
@@ -237,6 +271,7 @@ void
 cv_wait(struct cv *cv, struct lock *lock)
 {
         // Write this
+
         (void)cv;    // suppress warning until code gets written
         (void)lock;  // suppress warning until code gets written
 }
@@ -245,6 +280,7 @@ void
 cv_signal(struct cv *cv, struct lock *lock)
 {
         // Write this
+
 	(void)cv;    // suppress warning until code gets written
 	(void)lock;  // suppress warning until code gets written
 }
@@ -253,6 +289,7 @@ void
 cv_broadcast(struct cv *cv, struct lock *lock)
 {
 	// Write this
+  
 	(void)cv;    // suppress warning until code gets written
 	(void)lock;  // suppress warning until code gets written
 }
