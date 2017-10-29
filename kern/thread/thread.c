@@ -118,6 +118,7 @@ thread_create(const char *name)
 {
 	struct thread *thread;
 
+
 	DEBUGASSERT(name != NULL);
 
 	thread = kmalloc(sizeof(*thread));
@@ -150,6 +151,10 @@ thread_create(const char *name)
 	thread->t_did_reserve_buffers = false;
 
 	/* If you add to struct thread, be sure to initialize here */
+
+	thread->parent = NULL;
+	thread->child = NULL;
+	thread->state = false;
 
 	return thread;
 }
@@ -508,6 +513,19 @@ thread_fork(const char *name,
 		return ENOMEM;
 	}
 
+	//new code: intializes all the new data types
+	curthread->child = newthread;
+	newthread->parent = curthread;
+	curthread->cv = cv_create(curthread->t_name);
+	curthread->lock = lock_create(curthread->t_name);
+
+	curthread->wchan = wchan_create(curthread->t_name);
+	if (curthread->wchan == NULL) {
+		kfree(curthread->t_name);
+		kfree(curthread);
+	}
+//end of new code
+
 	/* Allocate a stack */
 	newthread->t_stack = kmalloc(STACK_SIZE);
 	if (newthread->t_stack == NULL) {
@@ -548,6 +566,21 @@ thread_fork(const char *name,
 	thread_make_runnable(newthread, false);
 
 	return 0;
+}
+
+int
+thread_join(struct thread *pthread){
+
+	KASSERT(pthread != NULL);
+	KASSERT(pthread->child != NULL);
+
+	lock_acquire(pthread->lock);
+	while(pthread->child->state ==false){
+		cv_wait(pthread->cv, pthread->lock);
+	}
+	lock_release(pthread->lock);
+
+return 1;
 }
 
 /*
@@ -620,6 +653,12 @@ thread_switch(threadstate_t newstate, struct wchan *wc, struct spinlock *lk)
 	    case S_ZOMBIE:
 		cur->t_wchan_name = "ZOMBIE";
 		threadlist_addtail(&curcpu->c_zombies, cur);
+		if(cur->parent != NULL){
+			lock_acquire(cur->parent->lock);
+			cur->parent->state = true;
+			cv_signal(cur->parent->cv, cur->parent->lock);
+			lock_release(cur->parent->lock);
+		}
 		break;
 	}
 	cur->t_state = newstate;
@@ -802,6 +841,9 @@ thread_exit(void)
 	/* Interrupts off on this processor */
         splhigh();
 	thread_switch(S_ZOMBIE, NULL, NULL);
+
+	//add new code here for child that ends???
+
 	panic("braaaaaaaiiiiiiiiiiinssssss\n");
 }
 

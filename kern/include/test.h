@@ -54,6 +54,8 @@ int threadlisttest(int, char **);
 int threadtest(int, char **);
 int threadtest2(int, char **);
 int threadtest3(int, char **);
+int threadtest4(int, char **);
+//void temp_print(void *junk, unsigned long num);
 int semtest(int, char **);
 int locktest(int, char **);
 int cvtest(int, char **);

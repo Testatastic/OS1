@@ -35,7 +35,7 @@
  *
  * Note: curthread is defined by <current.h>.
  */
-
+#include <synch.h>
 #include <array.h>
 #include <spinlock.h>
 #include <threadlist.h>
@@ -72,7 +72,13 @@ struct thread {
 	 */
 	char *t_name;			/* Name of this thread */
 	const char *t_wchan_name;	/* Name of wait channel, if sleeping */
+	bool state;
 	threadstate_t t_state;		/* State this thread is in */
+	struct thread *child;
+	struct thread *parent;
+	struct wchan *wchan;
+	struct cv *cv;
+	struct lock *lock;
 
 	/*
 	 * Thread subsystem internal fields.
@@ -147,6 +153,7 @@ int thread_fork(const char *name, struct proc *proc,
                 void (*func)(void *, unsigned long),
                 void *data1, unsigned long data2);
 
+int thread_join(struct thread *pthread);
 /*
  * Cause the current thread to exit.
  * Interrupts need not be disabled.
@@ -170,6 +177,7 @@ void schedule(void);
  * timer interrupt.
  */
 void thread_consider_migration(void);
+
 
 
 #endif /* _THREAD_H_ */

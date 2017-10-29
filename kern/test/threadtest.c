@@ -144,3 +144,42 @@ threadtest2(int nargs, char **args)
 
 	return 0;
 }
+
+static
+void
+temp_print(void *junk, unsigned long num) {
+	(void) junk;
+	(void) num;
+
+	kprintf("Thread tests\n");
+}
+
+int
+threadtest4(int nargs, char **args)
+{
+	(void)nargs;
+	(void)args;
+	init_sem();
+
+	kprintf("Starting thread test 4 (join)...\n");
+	int doloud = 0;
+
+	struct thread *kids[NTHREADS];
+	int i;
+	char name[16];
+
+
+	for (i=0; i<NTHREADS; i++) {
+		//snprintf(name, sizeof(name), "threadtest%d", i);
+		thread_fork(name, NULL,
+				     doloud ? temp_print : loudthread,
+				     NULL, i);
+	}
+
+	for (i=0; i<NTHREADS; i++) {
+	 thread_join(kids[i]);
+	}
+
+  kprintf("Thread test 4 (join) done.\n");
+	return 0;
+}

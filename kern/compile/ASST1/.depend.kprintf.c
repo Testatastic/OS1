@@ -5,8 +5,8 @@ kprintf.o: ../../lib/kprintf.c ../../include/types.h \
  opt-noasserts.h ../../include/spl.h ../../include/cpu.h \
  ../../include/spinlock.h includelinks/machine/spinlock.h \
  ../../include/threadlist.h includelinks/machine/vm.h \
- ../../include/thread.h ../../include/array.h \
+ ../../include/thread.h ../../include/synch.h ../../include/array.h \
  includelinks/machine/thread.h ../../include/setjmp.h \
  includelinks/kern/machine/setjmp.h ../../include/current.h \
- includelinks/machine/current.h ../../include/synch.h \
- ../../include/mainbus.h ../../include/vfs.h ../../dev/lamebus/ltrace.h
+ includelinks/machine/current.h ../../include/mainbus.h \
+ ../../include/vfs.h ../../dev/lamebus/ltrace.h

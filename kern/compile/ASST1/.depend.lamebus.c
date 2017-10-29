@@ -6,6 +6,6 @@ lamebus.o: ../../dev/lamebus/lamebus.c ../../include/types.h \
  includelinks/machine/vm.h ../../include/membar.h \
  includelinks/machine/membar.h ../../include/current.h \
  includelinks/machine/current.h ../../include/thread.h \
- ../../include/array.h includelinks/machine/thread.h \
- ../../include/setjmp.h includelinks/kern/machine/setjmp.h \
- ../../dev/lamebus/lamebus.h
+ ../../include/synch.h ../../include/array.h \
+ includelinks/machine/thread.h ../../include/setjmp.h \
+ includelinks/kern/machine/setjmp.h ../../dev/lamebus/lamebus.h
